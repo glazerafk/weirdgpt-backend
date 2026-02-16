@@ -1,0 +1,4 @@
+﻿body { background: #1e1e1e; color: #fff; font-family: monospace; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+#chat-container { width: 600px; }
+#chat { height: 400px; overflow-y: auto; background: #121212; padding:10px; border-radius:5px; margin-bottom:5px; }
+#user-input { width: 100%; padding:10px; border-radius:5px; border:none; background:#2a2a2a; color:#fff; }

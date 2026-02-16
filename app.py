@@ -1,56 +1,57 @@
-from flask import Flask, request, jsonify
+﻿from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='frontend', static_url_path='/')
 CORS(app)
 
-OLLAMA_URL = "https://api.ollama.com/v1/chat"  # URL Cloud
-MODEL = "llama3:8b"
-API_KEY = os.getenv("OLLAMA_API_KEY")  # pega da variável de ambiente
+# Configurações Ollama
+OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY', '')
+OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://localhost:11434/api/chat')
+MODEL = os.environ.get('MODEL', 'llama3:8b')
 
 SYSTEM_PROMPT = (
-    "You are WeirdGPT.\n"
-    "You are casual, funny, and direct.\n"
-    "Do not act like customer support.\n"
-    "Do not mention templates or instructions.\n"
-    "Speak like a normal person.\n"
+    "You are WeirdGPT. "
+    "You are casual, funny, and direct. "
+    "Do not act like customer support. "
+    "Do not mention templates or instructions. "
+    "Speak like a normal person."
 )
 
 chat_history = []
 
-def ask_ollama(user_text):
+# =====================
+# Rota principal (frontend)
+# =====================
+@app.route("/")
+def index():
+    return send_from_directory('frontend', 'index.html')
+
+# =====================
+# API endpoint
+# =====================
+@app.route("/api/chat", methods=["POST"])
+def api_chat():
+    data = request.json
+    user_text = data.get("message", "")
+
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for u, b in chat_history[-6:]:
         messages.append({"role": "user", "content": u})
         messages.append({"role": "assistant", "content": b})
+
     messages.append({"role": "user", "content": user_text})
 
-    headers = {"Authorization": f"Bearer {API_KEY}"}
     response = requests.post(
         OLLAMA_URL,
         json={"model": MODEL, "messages": messages, "stream": False},
-        headers=headers
+        headers={"Authorization": f"Bearer {OLLAMA_API_KEY}"} if OLLAMA_API_KEY else {}
     )
 
-    data = response.json()
-    reply = data["message"]["content"].strip()
-    return reply
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_text = request.json.get("message")
-    if not user_text:
-        return jsonify({"error": "Missing 'message'"}), 400
-
-    reply = ask_ollama(user_text)
+    reply = response.json()["message"]["content"].strip()
     chat_history.append((user_text, reply))
     return jsonify({"reply": reply})
 
-@app.route("/")
-def home():
-    return jsonify({"status": "WeirdGPT backend is running 😈🔥"})
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 3000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
