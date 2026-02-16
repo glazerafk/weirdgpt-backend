@@ -6,7 +6,7 @@ import requests
 # =====================
 # configs lfmao(DONT CHANGE SHIT BELOW!!)
 # =====================
-OLLAMA_URL = "https://api.ollama.com/v1/chat"  # dont change
+OLLAMA_URL = "https://api.ollama.com/v1/chat"
 MODEL = "llama3:8b"
 OLLAMA_API_KEY = os.environ.get("OLLAMA_API_KEY")  # key
 
@@ -57,12 +57,8 @@ def ask_ollama(user_text):
     return reply
 
 # =====================
-# shit fuck fuck shit
+# chat endpoint only
 # =====================
-@app.route("/")
-def home():
-    return jsonify({"status": "/chat please"})
-
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
@@ -72,7 +68,7 @@ def chat():
 
     reply = ask_ollama(user_message)
     chat_history.append((user_message, reply))
-    return jsonify({"reply": reply})
+    return jsonify({"reply": reply, "history": chat_history})
 
 # =====================
 # START SERVER
@@ -80,4 +76,3 @@ def chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 3000))
     app.run(host="0.0.0.0", port=port)
-# made by me ofcourse bitchasses
